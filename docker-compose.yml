@@ -11,7 +11,7 @@ services:
       - mongo_data:/data/db
 
   backend:
-    image: <dockerhub_username>/dd-backend:latest
+    image: yaseen778/dd-backend:latest
     container_name: mean-backend
     restart: always
     environment:
