@@ -10,50 +10,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: DEBUG EC2_HOST
-      run: echo "Length: ${#EC2_HOST}"
-      env:
-        EC2_HOST: ${{ secrets.EC2_HOST }}
-
-    - name: Set up SSH
-      env:
-        HOST: ${{ secrets.EC2_HOST }}
+    - name: Setup SSH
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-
-        # FORCE ADD REAL HOST FINGERPRINT
-        ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
-        echo "Added fingerprint for $HOST"
-        cat ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
     - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Build backend image
       run: |
-        docker build -t yaseen778/dd-backend ./backend
-        docker push yaseen778/dd-backend
+        echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-    - name: Build frontend image
+    - name: Build & Push Backend
       run: |
-        docker build -t yaseen778/dd-frontend ./frontend
-        docker push yaseen778/dd-frontend
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/dd-backend ./backend
+        docker push ${{ secrets.DOCKER_USERNAME }}/dd-backend:latest
+
+    - name: Build & Push Frontend
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/dd-frontend ./frontend
+        docker push ${{ secrets.DOCKER_USERNAME }}/dd-frontend:latest
 
     - name: Deploy on EC2
-      env:
-        HOST: ${{ secrets.EC2_HOST }}
-        USER: ${{ secrets.EC2_USER }}
       run: |
-        ssh -o StrictHostKeyChecking=no "$USER@$HOST" "
+        ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
           cd ~/discover-dollar-mean-devops-task &&
           git pull &&
           docker-compose pull &&
