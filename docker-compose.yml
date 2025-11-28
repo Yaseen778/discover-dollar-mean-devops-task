@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3"
 
 services:
   mongo:
@@ -9,30 +9,32 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    networks:
+      - mean-net
 
   backend:
     image: yaseen778/dd-backend:latest
     container_name: mean-backend
     restart: always
-    environment:
-      - MONGO_URL=mongodb://mongo:27017/tutorialsdb
-    depends_on:
-      - mongo
     ports:
       - "3000:3000"
+    depends_on:
+      - mongo
+    networks:
+      - mean-net
 
   frontend:
     image: yaseen778/dd-frontend:latest
     container_name: mean-frontend
     restart: always
-    depends_on:
-      - backend
     ports:
       - "4200:4200"
+    depends_on:
+      - backend
+    networks:
+      - mean-net
 
-volumes:
-  mongo_data:
-   nginx:
+  nginx:
     image: nginx:latest
     container_name: mean-nginx
     ports:
@@ -45,3 +47,8 @@ volumes:
     networks:
       - mean-net
 
+networks:
+  mean-net:
+
+volumes:
+  mongo_data:
