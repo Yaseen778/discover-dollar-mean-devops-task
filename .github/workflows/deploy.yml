@@ -10,45 +10,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+    # --------------------------
+    # 1. CHECKOUT REPO
+    # --------------------------
     - name: Checkout code
       uses: actions/checkout@v3
 
+    # --------------------------
+    # 2. DEBUG EC2 HOST (check secret stored)
+    # --------------------------
     - name: DEBUG EC2_HOST
       run: echo "Length: ${#EC2_HOST}"
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
 
+    # --------------------------
+    # 3. SETUP SSH FOR EC2 ACCESS
+    # --------------------------
     - name: Set up SSH
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
+        
+        # Add EC2 Host Fingerprint
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+        
+        # Debug known_hosts
+        cat ~/.ssh/known_hosts
 
+    # --------------------------
+    # 4. LOGIN TO DOCKER HUB (safe)
+    # --------------------------
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Build and push backend image
+    # --------------------------
+    # 5. BUILD + PUSH BACKEND IMAGE
+    # --------------------------
+    - name: Build & push backend image
       run: |
         docker build -t yaseen778/dd-backend ./backend
-        docker tag yaseen778/dd-backend yaseen778/dd-backend:latest
-        docker push yaseen778/dd-backend:latest
+        docker push yaseen778/dd-backend
 
-    - name: Build and push frontend image
+    # --------------------------
+    # 6. BUILD + PUSH FRONTEND IMAGE
+    # --------------------------
+    - name: Build & push frontend image
       run: |
         docker build -t yaseen778/dd-frontend ./frontend
-        docker tag yaseen778/dd-frontend yaseen778/dd-frontend:latest
-        docker push yaseen778/dd-frontend:latest
+        docker push yaseen778/dd-frontend
 
+    # --------------------------
+    # 7. DEPLOY ON EC2
+    # --------------------------
     - name: Deploy on EC2
       run: |
-        ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-          cd ~/discover-dollar-mean-devops-task &&
-          git pull &&
-          docker-compose pull &&
-          docker-compose up -d
-        "
-
+        ssh -o StrictHostKeyChecking=no \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
+            cd ~/discover-dollar-mean-devops-task &&
+            git pull &&
+            docker-compose pull &&
+            docker-compose up -d
+          "
