@@ -3,7 +3,7 @@ const cors = require("cors");
 const app = express();
 const mongoose = require("mongoose");
 
-app.use(cors());  // ⭐ FIX: Allow frontend to call backend
+app.use(cors());  
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
