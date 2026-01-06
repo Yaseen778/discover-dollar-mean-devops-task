@@ -39,9 +39,7 @@ The AWS Security Group was configured to allow public access to the necessary ap
 | :--- | :--- | :--- | :--- |
 | **80** | TCP | **Nginx Reverse Proxy** (Public Application Access) | `0.0.0.0/0` |
 | **22** | TCP | **SSH** (For management and CI/CD deployment) | `0.0.0.0/0` |
-| 4200 | TCP | Frontend (Angular) | *Internal/Specific* |
-| 3000 | TCP | Backend (Node/Express API) - | *Internal/Specific* |
-| 27017 | TCP | MongoDB  | *Internal/Specific* |
+
 
 ---
 
